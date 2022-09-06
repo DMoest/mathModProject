@@ -14,6 +14,8 @@ import json
 from pprint import pprint as pp
 
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as plt
 
 import csv
 
@@ -51,7 +53,7 @@ def clean_up_csv_data(data_frame):
     :return: Pandas DataFrame
     """
     data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%Y-%m-%d %H:%M:%S')
-    data_frame.drop(columns=['SNo', 'Symbol', 'High', 'Low', 'Volume'], inplace=True)
+    data_frame.drop(columns=['SNo', 'Symbol', 'High', 'Low', 'Open', 'Volume', 'Marketcap'], inplace=True)
     data_frame.set_index('Date', inplace=True)
 
     return data_frame
@@ -82,6 +84,7 @@ def clean_all_data_frames(input_data_paths):
         print(f'Reading parsed CSV file for {data} data... ')
         data_frame_name = f'data_frame_{data}'
         globals()[data_frame_name] = pd.read_csv(parsed_data_paths[data], delimiter=',')
+        globals()[data_frame_name] = globals()[data_frame_name].rename(columns={'Close': f'Value {data}'})
         input_data_paths[data] = globals()[data_frame_name]
 
         print(f'Cleaning up data and create a Pandas data frame for {data}... \n')
@@ -90,84 +93,115 @@ def clean_all_data_frames(input_data_paths):
 
     print("Parsed data paths: \n", json.dumps(parsed_data_paths, indent=4), "\n")
     print('Done parsing files, cleaning up CSV data files and creating Pandas data frames. \n')
-    pp(f'Data frames created: \n{data_frames}\n ')
+    pp(data_frames.values())
+
+
+def lineplot_data_frames(input_data_frames):
+    """
+    Plots the data from the Pandas data frames.
+
+    :param input_data_frames: A dictionary of Pandas data frames
+    :type input_data_frames: dict
+
+    :return: None
+    """
+    for data_frame in input_data_frames:
+        print(f'Plotting data from {data_frame}... ')
+        input_data_frames[data_frame].plot()
+
+        sns.lineplot(data=input_data_frames[data_frame], x='Date', y=f'Value {data_frame}').figure.savefig(
+            f'./plots/plot_{data_frame}.png', dpi=300)
+
+        plt.show()
+
+
+def calculate_description_statistics(input_data_frames):
+    """
+    Calculates the description statistics for the Pandas data frames.
+
+    :param input_data_frames: A dictionary of Pandas data frames
+    :type input_data_frames: dict
+
+    :return: None
+    """
+    statistics = {}
+
+    for data_frame in input_data_frames:
+        print(f'Calculating descriptive statistics for {data_frame}... ')
+        # print(input_data_frames[data_frame][f'Value {data_frame}'].describe())
+
+        df_values = input_data_frames[data_frame][f'Value {data_frame}']
+
+        # Create a Pandas data series with the descriptive statistics
+        data_series = pd.Series(
+            [df_values.count(),
+             df_values.min(),
+             df_values.max(),
+             df_values.mean(),
+             df_values.median(),
+             df_values.std(),
+             df_values.var(),
+             df_values.skew(),
+             df_values.kurt()
+             ], index=['Count', 'Min', 'Max', 'Mean', 'Median', 'Std', 'Var', 'Skew', 'Kurt'])
+
+        # Set header and output the descriptive statistics to a csv file
+        data_series.set(title=f'Descriptive statistics {data_frame}').to_csv(
+            f'./statistics/statistics_{data_frame}.csv', header=False)
+
+        # Add data series to dictionary
+        statistics[data_frame] = data_series
+
+    return statistics
 
 
 # Paths for the csv files containing the data
 data_paths = {
+    'Aave': './csv/coin_Aave.csv',
+    'BinanceCoin': './csv/coin_BinanceCoin.csv',
     'Bitcoin': './csv/coin_Bitcoin.csv',
-    'Ethereum': './csv/coin_Ethereum.csv',
-    'Monero': './csv/coin_Monero.csv',
+    'Cardano': './csv/coin_Cardano.csv',
+    'ChainLink': './csv/coin_ChainLink.csv',
+    'Cosmos': './csv/coin_Cosmos.csv',
+    'CryptocomCoin': './csv/coin_CryptocomCoin.csv',
     'Dogecoin': './csv/coin_Dogecoin.csv',
+    'EOS': './csv/coin_EOS.csv',
+    'Ethereum': './csv/coin_Ethereum.csv',
+    'Iota': './csv/coin_Iota.csv',
+    'Litecoin': './csv/coin_Litecoin.csv',
+    'Monero': './csv/coin_Monero.csv',
+    'NEM': './csv/coin_NEM.csv',
     'Polkadot': './csv/coin_Polkadot.csv',
+    'Solana': './csv/coin_Solana.csv',
+    'Stellar': './csv/coin_Stellar.csv',
+    'Tether': './csv/coin_Tether.csv',
+    'Tron': './csv/coin_Tron.csv',
+    'Uniswap': './csv/coin_Uniswap.csv',
+    'USDCoin': './csv/coin_USDCoin.csv',
+    'WrappedBitcoin': './csv/coin_WrappedBitcoin.csv',
+    'XRP': './csv/coin_XRP.csv',
 }
 
-# Paths for parsed csv files
-parsed_data_paths = {}
-data_frames = {}
+parsed_data_paths = {}  # Dictionary for parsed data paths
+data_frames = {}  # Dictionary for Pandas data frames
+linear_regression_data = {}  # Dictionary for linear regression data
+
+# Clean up data and create Pandas data frames
 clean_all_data_frames(data_paths)
 
-# Dictionary for the dataframes
+# Concatinate all data frames into one and drop all rows with NaN values
+concat_data_frame = pd.concat(data_frames, axis=1).dropna()
+concat_data_frame.plot()
 
-#     # Clear data from parsed csv file
-#     dynamic_cleared_dataframe_name = f'cleared_data_frame_{data}'
-#     globals()[dynamic_cleared_dataframe_name] = clear_smhi_data_pandas(globals()[dynamic_dataframe_name])
-#     data_frames[data] = globals()[dynamic_cleared_dataframe_name]
-#     # data_frames[data] = data_frames[data].rename(columns={'Lufttemperatur': f'LT_{data[:3]}'})
-#
-#     # Plot data
-#     data_frames[data].plot()
-#
-# # Concatenate dataframes & drop NaN values. This is done to get a dataframe with all the data.
-# concat_data_frame = pd.concat(data_frames, axis=1).dropna()
-# print("Concatenated data frame:")
-# print(concat_data_frame)
-#
-# concat_data_frame.plot(title='Temperatur västerås, arlanda, lanvetter, sturup, kiruna', ylabel='Temperatur',
-#                        xlabel='Datum')
-#
-# X = concat_data_frame.index.map(datetime.toordinal).values.reshape(-1, 1)
-# Y = concat_data_frame.iloc[:, 1].values.reshape(-1, 1)
-#
-# print(f'X: {X}')
-# print(f'Y: {Y}')
-#
-# # Create linear regression model
-# linear_reg = LinearRegression()
-# linear_reg.fit(X, Y)
-# Y_pred = linear_reg.predict(X)
-# print(f'Y_pred: {Y_pred}')
-# Y_residual = Y - Y_pred
-# print(f'Y_residual: {Y_residual}')
-#
-# # Plot linear regression model
-# plt.figure()
-# plt.scatter(X, Y)
-# plt.plot(X, Y_pred, color='red')
-#
-# residual = concat_data_frame['västerås'].values - Y_pred
-# concat_data_frame['residual_väs'] = residual
-# concat_data_frame['residual_väs'].plot()
-#
-# residual_variance = residual.var()
-# correlation = concat_data_frame.corr()
-#
-# # Seaborn plot
-# sns.set_theme(style="darkgrid")
-# sns.distplot(concat_data_frame, kde=False)
-# print(f"{concat_data_frame.columns[0][1]}")
-#
-# # sns.heatmap(correlation)
-# # plt.title('Correlation between sites')
-#
+print(f'Data frame info: \n{concat_data_frame.info()}\n')
+print(f'Staring to create Seaborn lineplots from data frames... ')
+# lineplot_data_frames(data_frames)
+
+# Calculate descriptive statistics
+descriptive_statistics = calculate_description_statistics(data_frames)
+concat_descriptive_statistics = pd.concat(descriptive_statistics, axis=1).dropna()
+
+print(f'Concatinated descriptive statistics: \n{concat_descriptive_statistics}\n')
+
+# Show plots
 # plt.show()
-#
-# print(correlation)
-#
-# # residuals = {}
-# #
-# # for data in concat_data_frame:
-# #     dynamic_residual_name = f'residual_{data}'
-# #     globals()[dynamic_residual_name] = data_frames[data].values - Y_pred.squeeze()
-# #     data_frames[dynamic_residual_name] = globals()[dynamic_residual_name]
-# #     data_frames[dynamic_residual_name].plot()
