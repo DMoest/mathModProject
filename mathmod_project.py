@@ -54,7 +54,10 @@ def clean_up_csv_data(data_frame):
     Cleans up a csv file. Removes unnecessary columns.
 
     :param data_frame: Pandas DataFrame
+    :type data_frame: pd.DataFrame
+
     :return: Pandas DataFrame
+    :rtype: pd.DataFrame
     """
     data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%Y-%m-%d %H:%M:%S')
     data_frame.drop(columns=['SNo', 'Symbol', 'High', 'Low', 'Open', 'Volume', 'Marketcap'], inplace=True)
@@ -100,12 +103,50 @@ def clean_all_data_frames(input_data_paths):
     pp(data_frames.values())
 
 
-def lineplot_data_frames(input_data_frames):
+def concatenate_data_frames(input_data_frames):
+    """
+    The function concatenates all data frames into one and drops all rows with NaN values.
+
+    :param input_data_frames: A list of data frames to be concatinated
+    :type input_data_frames: dict
+
+    :return A data frame with all the data from the input data frames concatinated into one data frame.
+    :rtype pd.DataFrame
+    """
+    concatenated_data_frame = pd.concat(input_data_frames, axis=1).dropna()
+
+    return concatenated_data_frame
+
+
+def plot_concatinated_data_frame(input_data_frame, show=False):
+    """
+    This function takes in a data frame and plots it.
+
+    :param input_data_frame: The data frame that you want to plot.
+    :type input_data_frame: pd.DataFrame
+    :param show: If True, the plot will be shown
+    :type bool
+    :type input_data_frame: pd.DataFrame
+
+    :return: None
+    """
+    input_data_frame.plot()
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+    plt.subplots_adjust(right=0.75, bottom=0.2)
+    plt.savefig('plots/value_over_time/all_data_frames_concatenated.png')
+
+    if show:
+        plt.show()
+
+
+def lineplot_data_frames(input_data_frames, show=False):
     """
     Plots the data from the Pandas data frames.
 
     :param input_data_frames: A dictionary of Pandas data frames
     :type input_data_frames: dict
+    :param show: If True, the plot will be shown
+    :type show: bool
 
     :return: None
     """
@@ -117,7 +158,8 @@ def lineplot_data_frames(input_data_frames):
         sns.lineplot(data=input_data_frames[data_frame], x='Date', y=data_frame).figure.savefig(
             f'./plots/value_over_time/value_over_time_{data_frame}.png', dpi=300)
 
-        plt.show()
+        if show:
+            plt.show()
 
     print('Done plotting value over time data. \n')
 
@@ -159,12 +201,16 @@ def calculate_description_statistics(input_data_frames):
     return statistics
 
 
-def plot_descriptive_statistics_table(input_data_frame):
+def plot_descriptive_statistics_table(input_data_frame, show=False):
     """
     Plots the descriptive statistics table.
 
-    :param input_data_frame:
-    :return:
+    :param input_data_frame: A Pandas data frame with the descriptive statistics.
+    :type input_data_frame: pd.DataFrame.
+    :param show: If True, the plot will be shown
+    :type show: bool
+
+    :return: None
     """
     table = plt.table(
         cellText=input_data_frame.values.round(3),
@@ -189,15 +235,19 @@ def plot_descriptive_statistics_table(input_data_frame):
     )
     # make space for the table:
     plt.subplots_adjust(left=0.05, bottom=0.05)
-    plt.show()  # Show plots
+
+    if show:
+        plt.show()
 
 
-def calculate_correlation_matrix_and_plot_heatmap(input_data_frame):
+def calculate_correlation_matrix_and_plot_heatmap(input_data_frame, show=False):
     """
     This function takes in a data frame, creates a correlation matrix, and plots a heatmap of the correlation matrix.
 
     :param input_data_frame: The data frame that contains the data that you want to calculate the correlation matrix for
     :type input_data_frame: pd.DataFrame
+    :param show: If True, the plot will be shown
+    :type show: bool
 
     :return: Correlation matrix
     :rtype: pd.DataFrame
@@ -213,7 +263,7 @@ def calculate_correlation_matrix_and_plot_heatmap(input_data_frame):
     plt.xlabel('Cryptocurrencies', fontsize=10)
     plt.ylabel('Cryptocurrencies', fontsize=10)
     plt.text(1, 1, '', ha='center', va='center', fontsize=4)
-    plt.xticks(rotation=35)
+    plt.xticks(rotation=75)
     plt.yticks(rotation=15)
     plt.subplots_adjust(left=0.25, bottom=0.25)
 
@@ -221,28 +271,22 @@ def calculate_correlation_matrix_and_plot_heatmap(input_data_frame):
     correlation_heatmap.figure.savefig('./plots/heatmaps/correlation_heatmap.png', bbox_inches='tight', dpi=300)
 
     # Show plots
-    plt.show()
+    if show:
+        plt.show()
 
     return correlation_matrix
 
 
-def concatenate_data_frames(input_data_frames):
-    """
-    The function concatenates all data frames into one and drops all rows with NaN values.
-
-    :param input_data_frames: A list of data frames to be concatinated
-    :type input_data_frames: dict
-
-    :return: A data frame with all the data from the input data frames concatinated into one data frame.
-    :rtype: pd.DataFrame
-    """
-    concatenated_data_frame = pd.concat(input_data_frames, axis=1).dropna()
-
-    return concatenated_data_frame
-
-
 # Normal distribution plots
-def plot_normal_distributions(input_data_frames):
+def plot_normal_distributions(input_data_frames, show=False):
+    """
+    This function plots the normal distribution of each of the input data frames
+
+    :param input_data_frames: A dictionary of data frames
+    :type input_data_frames: dict
+    :param show: If True, the plot will be shown, defaults to False (optional)
+    :type show: bool, optional
+    """
     print("Starting to plot normal distributions...")
 
     for data in input_data_frames:
@@ -257,12 +301,22 @@ def plot_normal_distributions(input_data_frames):
         )
         plt.title(f'Normal distribution of {data}', fontsize=20)
         plt.savefig(f'./plots/normal_distribution/normal_distribution_{data}.png', bbox_inches='tight', dpi=300)
-        # plt.show() # TODO: Uncomment this line to show the plots
+
+        if show:
+            plt.show()
 
     print("Done plotting normal distributions. \n")
 
 
-def calculate_simple_linear_regressions(input_data_frames):
+def calculate_simple_linear_regressions(input_data_frames, show=False):
+    """
+    > This function takes in a dictionary of data frames, and returns a dictionary of linear regression models
+
+    :param input_data_frames: A dictionary of data frames
+    :type input_data_frames: dict
+    :param show: If True, the plot will be shown. If False, the plot will be saved to a file, defaults to False (optional)
+    :type show: bool, optional
+    """
     print("Starting to calculate simple linear regressions...")
 
     for data_frame in input_data_frames:
@@ -282,21 +336,39 @@ def calculate_simple_linear_regressions(input_data_frames):
         # # Get the slope and intercept of the line best fit
         slope = linear_regression.coef_[0][0]
         intercept = linear_regression.intercept_[0]
-        x_predict = model.predict(x)
+        y_predict = model.predict(x)
         fx = intercept + slope * x
 
-        y_predict = model.predict(x)
+        # Store the linear regression model in a dictionary
+        linear_regressions[data_frame] = {
+            'x': x,
+            'y': y,
+            'y_predict': y_predict,
+            'fx': fx,
+            'r_squared': r_squared,
+            'slope': slope,
+            'intercept': intercept
+        }
 
+        # Plot the linear regression
         sns.set_style('darkgrid')
-        dot_size = 0.75
-        plt.scatter(x, y, s=dot_size)
-        plt.xlabel('Date', fontsize=10)
+        # plot = sns.regplot(x, y_predict, ci=95, scatter_kws={'color': 'orange', 's': 2},
+        #                    line_kws={'color': 'red', 'lw': 1})
+        dot_size = 0.7
+        plot = sns.regplot(x, y, ci=95, scatter_kws={'color': 'blue', 's': 2}, line_kws={'color': 'red', 'lw': 0.5},
+                           dropna=True, marker='.')
+
+        # plt.scatter(x, y, s=dot_size, color='blue')
         plt.title(f'{data_frame} over Time', fontsize=16)
-        plt.plot(x, y_predict, color='red')
+        plt.xlabel('Date', fontsize=10)
+        plt.ylabel('Value', fontsize=10)
+        plot.plot(x, y_predict, color='red', linewidth=0.5)
+
         plt.savefig(f'./plots/linear_regression/linear_regression_{data_frame}.png', bbox_inches='tight',
                     dpi=300)
 
-        plt.show()
+        if show:
+            plt.show()
 
     print('Done calculating simple linear regressions. \n')
 
@@ -330,15 +402,13 @@ data_paths = {
 # Dictionary for the data frames
 parsed_data_paths = {}  # Dictionary for parsed data paths
 data_frames = {}  # Dictionary for Pandas data frames
-linear_regression_data = {}  # Dictionary for linear regression data
+linear_regressions = {}  # Dictionary for linear regression models
 
 # Clean up data and create Pandas data frames
 clean_all_data_frames(data_paths)
 
 # Concatenate all data frames into one
 concat_data_frame = concatenate_data_frames(data_frames)
-concat_data_frame.plot()
-plt.show()  # TODO: Uncomment before handing in the project, this plots the value over time for all cryptocurrencies
 
 # Calculate descriptive statistics from the data frames and concatenate them into one data frame for plotting
 descriptive_statistics = calculate_description_statistics(data_frames)
@@ -346,8 +416,9 @@ descriptive_statistics_table = concatenate_data_frames(descriptive_statistics)
 
 # TODO: Fix plotting, uncomment before handing in assignment.
 # Run plot data functions
-# lineplot_data_frames(data_frames)
-# plot_descriptive_statistics_table(descriptive_statistics_table)
-# calculate_correlation_matrix_and_plot_heatmap(concat_data_frame)
-# plot_normal_distributions(data_frames)
-calculate_simple_linear_regressions(data_frames)
+plot_concatinated_data_frame(concat_data_frame, True)
+lineplot_data_frames(data_frames, True)
+plot_descriptive_statistics_table(descriptive_statistics_table, True)
+calculate_correlation_matrix_and_plot_heatmap(concat_data_frame, True)
+plot_normal_distributions(data_frames, True)
+calculate_simple_linear_regressions(data_frames, True)
