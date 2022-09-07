@@ -9,13 +9,14 @@ This is the final and examining project of the course "Mathematical Modeling" at
 @course:    Mathematical Modeling, MA1487
 @teacher:   Simon Nilsson
 """
-
 import json
+from datetime import datetime
 from pprint import pprint as pp
 
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from sklearn.linear_model import LinearRegression
 
 import csv
 
@@ -24,9 +25,12 @@ def parse_csv_data(data_file_path, key, delimiter=','):
     """
     Parses a csv file.
 
-    :param data_file_path:
-    :param delimiter:
-    :return:
+    :param data_file_path: Path to the csv file
+    :type data_file_path: str
+    :param key: Key for the parsed data
+    :type key: str
+    :param delimiter: Delimiter for the csv file
+    :type delimiter: str
     """
 
     # Remove 4 last letters (.csv) from path name and add '-parsed.csv'
@@ -82,9 +86,9 @@ def clean_all_data_frames(input_data_paths):
 
         # Read data from parsed csv file
         print(f'Reading parsed CSV file for {data} data... ')
-        data_frame_name = f'data_frame_{data}'
+        data_frame_name = f'{data}'
         globals()[data_frame_name] = pd.read_csv(parsed_data_paths[data], delimiter=',')
-        globals()[data_frame_name] = globals()[data_frame_name].rename(columns={'Close': f'Value {data}'})
+        globals()[data_frame_name] = globals()[data_frame_name].rename(columns={'Close': f'{data}'})
         input_data_paths[data] = globals()[data_frame_name]
 
         print(f'Cleaning up data and create a Pandas data frame for {data}... \n')
@@ -105,15 +109,17 @@ def lineplot_data_frames(input_data_frames):
 
     :return: None
     """
-    print(f'Staring to create Seaborn lineplots from data frames... ')
-    for data_frame in input_data_frames:
-        print(f'Plotting data from {data_frame}... ')
-        input_data_frames[data_frame].plot()
+    print('Staring to create Seaborn lineplots from data frames... ')
 
-        sns.lineplot(data=input_data_frames[data_frame], x='Date', y=f'Value {data_frame}').figure.savefig(
-            f'./plots/plot_{data_frame}.png', dpi=300)
+    for data_frame in input_data_frames:
+        print(f'Plotting value over time data for {data_frame}... ')
+        input_data_frames[data_frame].plot()
+        sns.lineplot(data=input_data_frames[data_frame], x='Date', y=data_frame).figure.savefig(
+            f'./plots/value_over_time/value_over_time_{data_frame}.png', dpi=300)
 
         plt.show()
+
+    print('Done plotting value over time data. \n')
 
 
 def calculate_description_statistics(input_data_frames):
@@ -129,31 +135,170 @@ def calculate_description_statistics(input_data_frames):
 
     for data_frame in input_data_frames:
         print(f'Calculating descriptive statistics for {data_frame}... ')
-        # print(input_data_frames[data_frame][f'Value {data_frame}'].describe())
 
-        df_values = input_data_frames[data_frame][f'Value {data_frame}']
+        this_df = input_data_frames[data_frame][f'{data_frame}']
 
         # Create a Pandas data series with the descriptive statistics
-        data_series = pd.Series({'Count': df_values.count(),
-                                 'Min': df_values.min(),
-                                 'Max': df_values.max(),
-                                 'Mean': df_values.mean(),
-                                 'Median': df_values.median(),
-                                 'Std': df_values.std(),
-                                 'Var': df_values.var(),
-                                 # 'Skew': df_values.skew(),
-                                 # 'Kurt': df_values.kurt(),
-                                 })
+        output_data_frame = pd.Series({'Count': int(this_df.count()),
+                                       'Min': this_df.min(),
+                                       'Max': this_df.max(),
+                                       'Mean': this_df.mean(),
+                                       'Median': this_df.median(),
+                                       'Std': this_df.std(),
+                                       'Var': this_df.var(),
+                                       }, index=['Count', 'Min', 'Max', 'Mean', 'Median', 'Std', 'Var'])
 
         # Output the descriptive statistics to a csv file
-        data_series.to_csv(f'./statistics/statistics_{data_frame}.csv', header=False)
+        output_data_frame.to_csv(f'./tables/individual_statistics/statistics_{data_frame}.csv', header=False)
 
         # Add data series to dictionary
-        statistics[data_frame] = data_series
+        statistics[data_frame] = output_data_frame
 
     print('Done calculating descriptive statistics. \n')
 
     return statistics
+
+
+def plot_descriptive_statistics_table(input_data_frame):
+    """
+    Plots the descriptive statistics table.
+
+    :param input_data_frame:
+    :return:
+    """
+    table = plt.table(
+        cellText=input_data_frame.values.round(3),
+        colLabels=input_data_frame.columns,
+        rowLabels=input_data_frame.index,
+        cellLoc='left',
+        loc='center',
+    )
+    plt.axis('off')
+    table.auto_set_font_size(False)
+    table.set_fontsize(4)
+    plt.tight_layout()
+    plt.savefig(
+        './tables/summarized_descriptive_statistics.png',
+        facecolor='w',
+        edgecolor='w',
+        format=None,
+        bbox_inches=None,
+        orientation='landscape',
+        pad_inches=0.35,
+        dpi=300
+    )
+    # make space for the table:
+    plt.subplots_adjust(left=0.05, bottom=0.05)
+    plt.show()  # Show plots
+
+
+def calculate_correlation_matrix_and_plot_heatmap(input_data_frame):
+    """
+    This function takes in a data frame, creates a correlation matrix, and plots a heatmap of the correlation matrix.
+
+    :param input_data_frame: The data frame that contains the data that you want to calculate the correlation matrix for
+    :type input_data_frame: pd.DataFrame
+
+    :return: Correlation matrix
+    :rtype: pd.DataFrame
+    """
+    # Create Correlation matrix
+    correlation_matrix = input_data_frame.corr()
+
+    # Plot heatmap of correlation matrix
+    correlation_heatmap = sns.heatmap(correlation_matrix, annot=True, annot_kws={'size': 4}, cmap="flare")
+    correlation_heatmap.xaxis.set_tick_params(labelsize=5)
+    correlation_heatmap.yaxis.set_tick_params(labelsize=5)
+    plt.title('Correlations', fontsize=20)
+    plt.xlabel('Cryptocurrencies', fontsize=10)
+    plt.ylabel('Cryptocurrencies', fontsize=10)
+    plt.text(1, 1, '', ha='center', va='center', fontsize=4)
+    plt.xticks(rotation=35)
+    plt.yticks(rotation=15)
+    plt.subplots_adjust(left=0.25, bottom=0.25)
+
+    # Save figure to file
+    correlation_heatmap.figure.savefig('./plots/heatmaps/correlation_heatmap.png', bbox_inches='tight', dpi=300)
+
+    # Show plots
+    plt.show()
+
+    return correlation_matrix
+
+
+def concatenate_data_frames(input_data_frames):
+    """
+    The function concatenates all data frames into one and drops all rows with NaN values.
+
+    :param input_data_frames: A list of data frames to be concatinated
+    :type input_data_frames: dict
+
+    :return: A data frame with all the data from the input data frames concatinated into one data frame.
+    :rtype: pd.DataFrame
+    """
+    concatenated_data_frame = pd.concat(input_data_frames, axis=1).dropna()
+
+    return concatenated_data_frame
+
+
+# Normal distribution plots
+def plot_normal_distributions(input_data_frames):
+    print("Starting to plot normal distributions...")
+
+    for data in input_data_frames:
+        print(f"Plotting the normal distribution of {data}...")
+        sns.displot(
+            data=input_data_frames[data][f'{data}'],
+            x=input_data_frames[data][f'{data}'].values,
+            kde=True,
+            label=data,
+            stat="probability",
+            fill=True,
+        )
+        plt.title(f'Normal distribution of {data}', fontsize=20)
+        plt.savefig(f'./plots/normal_distribution/normal_distribution_{data}.png', bbox_inches='tight', dpi=300)
+        # plt.show() # TODO: Uncomment this line to show the plots
+
+    print("Done plotting normal distributions. \n")
+
+
+def calculate_simple_linear_regressions(input_data_frames):
+    print("Starting to calculate simple linear regressions...")
+
+    for data_frame in input_data_frames:
+        print(f"Calculating simple linear regression for {data_frame}...")
+
+        # Fit the linear regression model
+        x = input_data_frames[data_frame].index.map(datetime.toordinal).values.reshape(-1, 1)
+        y = input_data_frames[data_frame][data_frame].values.reshape(-1, 1)
+
+        # Create a linear regression object
+        linear_regression = LinearRegression()
+        model = linear_regression.fit(x, y)
+
+        # Get the slope and intercept of the line best fit
+        r_squared = model.score(x, y)
+
+        # # Get the slope and intercept of the line best fit
+        slope = linear_regression.coef_[0][0]
+        intercept = linear_regression.intercept_[0]
+        x_predict = model.predict(x)
+        fx = intercept + slope * x
+
+        y_predict = model.predict(x)
+
+        sns.set_style('darkgrid')
+        dot_size = 0.75
+        plt.scatter(x, y, s=dot_size)
+        plt.xlabel('Date', fontsize=10)
+        plt.title(f'{data_frame} over Time', fontsize=16)
+        plt.plot(x, y_predict, color='red')
+        plt.savefig(f'./plots/linear_regression/linear_regression_{data_frame}.png', bbox_inches='tight',
+                    dpi=300)
+
+        plt.show()
+
+    print('Done calculating simple linear regressions. \n')
 
 
 # Paths for the csv files containing the data
@@ -182,6 +327,7 @@ data_paths = {
     'XRP': './csv/coin_XRP.csv',
 }
 
+# Dictionary for the data frames
 parsed_data_paths = {}  # Dictionary for parsed data paths
 data_frames = {}  # Dictionary for Pandas data frames
 linear_regression_data = {}  # Dictionary for linear regression data
@@ -189,55 +335,19 @@ linear_regression_data = {}  # Dictionary for linear regression data
 # Clean up data and create Pandas data frames
 clean_all_data_frames(data_paths)
 
-# Concatinate all data frames into one and drop all rows with NaN values
-concat_data_frame = pd.concat(data_frames, axis=1).dropna()
+# Concatenate all data frames into one
+concat_data_frame = concatenate_data_frames(data_frames)
 concat_data_frame.plot()
-plt.show()
+plt.show()  # TODO: Uncomment before handing in the project, this plots the value over time for all cryptocurrencies
 
-# Plot individual data frames
-# lineplot_data_frames(data_frames)
-
-# Calculate descriptive statistics
+# Calculate descriptive statistics from the data frames and concatenate them into one data frame for plotting
 descriptive_statistics = calculate_description_statistics(data_frames)
+descriptive_statistics_table = concatenate_data_frames(descriptive_statistics)
 
-descriptive_statistics_table = pd.concat(descriptive_statistics, axis=1).dropna()
-table = plt.table(
-    cellText=descriptive_statistics_table.values.round(4),
-    colLabels=descriptive_statistics_table.columns,
-    rowLabels=descriptive_statistics_table.index,
-    cellLoc='left',
-    loc='center',
-)
-plt.axis('off')
-table.auto_set_font_size(False)
-table.set_fontsize(4)
-plt.tight_layout()
-plt.savefig(
-    './tables/descriptive_statistics.png',
-    facecolor='w',
-    edgecolor='w',
-    format=None,
-    bbox_inches=None,
-    orientation='landscape',
-    pad_inches=0.35,
-    dpi=300
-)
-# make space for the table:
-plt.subplots_adjust(left=0.05, bottom=0.05)
-# plt.xticks([])
-plt.show()  # Show plots
-
-# Correlation matrix and heatmap
-correlation_matrix = concat_data_frame.corr()
-correlation_heatmap = sns.heatmap(correlation_matrix.round(2), annot=True, annot_kws={'size': 4}, cmap="flare")
-correlation_heatmap.xaxis.set_tick_params(labelsize=5)
-correlation_heatmap.yaxis.set_tick_params(labelsize=5)
-plt.title('Correlations', fontsize=20)
-plt.xlabel('Cryptocurrencies', fontsize=10)
-plt.ylabel('Cryptocurrencies', fontsize=10)
-plt.text(0.75, 0.75, ' ', ha='center', va='center', rotation=0, fontsize=4)
-plt.subplots_adjust(left=0.3, bottom=0.35)
-correlation_heatmap.figure.savefig('./heatmaps/correlation_heatmap.png', bbox_inches='tight', dpi=300)
-
-# Show plots
-plt.show()
+# TODO: Fix plotting, uncomment before handing in assignment.
+# Run plot data functions
+# lineplot_data_frames(data_frames)
+# plot_descriptive_statistics_table(descriptive_statistics_table)
+# calculate_correlation_matrix_and_plot_heatmap(concat_data_frame)
+# plot_normal_distributions(data_frames)
+calculate_simple_linear_regressions(data_frames)
