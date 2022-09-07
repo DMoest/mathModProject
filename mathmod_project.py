@@ -105,6 +105,7 @@ def lineplot_data_frames(input_data_frames):
 
     :return: None
     """
+    print(f'Staring to create Seaborn lineplots from data frames... ')
     for data_frame in input_data_frames:
         print(f'Plotting data from {data_frame}... ')
         input_data_frames[data_frame].plot()
@@ -133,24 +134,24 @@ def calculate_description_statistics(input_data_frames):
         df_values = input_data_frames[data_frame][f'Value {data_frame}']
 
         # Create a Pandas data series with the descriptive statistics
-        data_series = pd.Series(
-            [df_values.count(),
-             df_values.min(),
-             df_values.max(),
-             df_values.mean(),
-             df_values.median(),
-             df_values.std(),
-             df_values.var(),
-             df_values.skew(),
-             df_values.kurt()
-             ], index=['Count', 'Min', 'Max', 'Mean', 'Median', 'Std', 'Var', 'Skew', 'Kurt'])
+        data_series = pd.Series({'Count': df_values.count(),
+                                 'Min': df_values.min(),
+                                 'Max': df_values.max(),
+                                 'Mean': df_values.mean(),
+                                 'Median': df_values.median(),
+                                 'Std': df_values.std(),
+                                 'Var': df_values.var(),
+                                 # 'Skew': df_values.skew(),
+                                 # 'Kurt': df_values.kurt(),
+                                 })
 
-        # Set header and output the descriptive statistics to a csv file
-        data_series.set(title=f'Descriptive statistics {data_frame}').to_csv(
-            f'./statistics/statistics_{data_frame}.csv', header=False)
+        # Output the descriptive statistics to a csv file
+        data_series.to_csv(f'./statistics/statistics_{data_frame}.csv', header=False)
 
         # Add data series to dictionary
         statistics[data_frame] = data_series
+
+    print('Done calculating descriptive statistics. \n')
 
     return statistics
 
@@ -178,7 +179,6 @@ data_paths = {
     'Tron': './csv/coin_Tron.csv',
     'Uniswap': './csv/coin_Uniswap.csv',
     'USDCoin': './csv/coin_USDCoin.csv',
-    'WrappedBitcoin': './csv/coin_WrappedBitcoin.csv',
     'XRP': './csv/coin_XRP.csv',
 }
 
@@ -192,16 +192,52 @@ clean_all_data_frames(data_paths)
 # Concatinate all data frames into one and drop all rows with NaN values
 concat_data_frame = pd.concat(data_frames, axis=1).dropna()
 concat_data_frame.plot()
+plt.show()
 
-print(f'Data frame info: \n{concat_data_frame.info()}\n')
-print(f'Staring to create Seaborn lineplots from data frames... ')
+# Plot individual data frames
 # lineplot_data_frames(data_frames)
 
 # Calculate descriptive statistics
 descriptive_statistics = calculate_description_statistics(data_frames)
-concat_descriptive_statistics = pd.concat(descriptive_statistics, axis=1).dropna()
 
-print(f'Concatinated descriptive statistics: \n{concat_descriptive_statistics}\n')
+descriptive_statistics_table = pd.concat(descriptive_statistics, axis=1).dropna()
+table = plt.table(
+    cellText=descriptive_statistics_table.values.round(4),
+    colLabels=descriptive_statistics_table.columns,
+    rowLabels=descriptive_statistics_table.index,
+    cellLoc='left',
+    loc='center',
+)
+plt.axis('off')
+table.auto_set_font_size(False)
+table.set_fontsize(4)
+plt.tight_layout()
+plt.savefig(
+    './tables/descriptive_statistics.png',
+    facecolor='w',
+    edgecolor='w',
+    format=None,
+    bbox_inches=None,
+    orientation='landscape',
+    pad_inches=0.35,
+    dpi=300
+)
+# make space for the table:
+plt.subplots_adjust(left=0.05, bottom=0.05)
+# plt.xticks([])
+plt.show()  # Show plots
+
+# Correlation matrix and heatmap
+correlation_matrix = concat_data_frame.corr()
+correlation_heatmap = sns.heatmap(correlation_matrix.round(2), annot=True, annot_kws={'size': 4}, cmap="flare")
+correlation_heatmap.xaxis.set_tick_params(labelsize=5)
+correlation_heatmap.yaxis.set_tick_params(labelsize=5)
+plt.title('Correlations', fontsize=20)
+plt.xlabel('Cryptocurrencies', fontsize=10)
+plt.ylabel('Cryptocurrencies', fontsize=10)
+plt.text(0.75, 0.75, ' ', ha='center', va='center', rotation=0, fontsize=4)
+plt.subplots_adjust(left=0.3, bottom=0.35)
+correlation_heatmap.figure.savefig('./heatmaps/correlation_heatmap.png', bbox_inches='tight', dpi=300)
 
 # Show plots
-# plt.show()
+plt.show()
