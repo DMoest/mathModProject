@@ -432,25 +432,18 @@ def plot_linear_regression_tables(input_data_frames, show=False):
 
 # Paths for the csv files containing the data
 data_paths = {
-    # 'Aave': './csv/coin_Aave.csv',
-    # 'BinanceCoin': './csv/coin_BinanceCoin.csv',
     'Bitcoin': './csv/coin_Bitcoin.csv',
     'Cardano': './csv/coin_Cardano.csv',
     'ChainLink': './csv/coin_ChainLink.csv',
     'Cosmos': './csv/coin_Cosmos.csv',
-    # 'CryptocomCoin': './csv/coin_CryptocomCoin.csv',
     'Dogecoin': './csv/coin_Dogecoin.csv',
-    # 'EOS': './csv/coin_EOS.csv',
     'Ethereum': './csv/coin_Ethereum.csv',
-    # 'Iota': './csv/coin_Iota.csv',
     'Litecoin': './csv/coin_Litecoin.csv',
     'Monero': './csv/coin_Monero.csv',
-    # 'NEM': './csv/coin_NEM.csv',
     'Polkadot': './csv/coin_Polkadot.csv',
     'Solana': './csv/coin_Solana.csv',
     'Stellar': './csv/coin_Stellar.csv',
     'Tether': './csv/coin_Tether.csv',
-    # 'Tron': './csv/coin_Tron.csv',
     'Uniswap': './csv/coin_Uniswap.csv',
     'USDCoin': './csv/coin_USDCoin.csv',
     'XRP': './csv/coin_XRP.csv',
@@ -473,10 +466,10 @@ descriptive_statistics_table = concatenate_data_frames(descriptive_statistics)
 
 # TODO: Fix plotting, uncomment before handing in assignment.
 # Run plot data functions
-# plot_concatinated_data_frame(concat_data_frame, True)
-# lineplot_data_frames(data_frames, True)
-# plot_descriptive_statistics_table(descriptive_statistics_table, True)
-# calculate_correlation_matrix_and_plot_heatmap(concat_data_frame, True)
-# plot_normal_distributions(data_frames, True)
+plot_concatinated_data_frame(concat_data_frame, True)
+lineplot_data_frames(data_frames, True)
+plot_descriptive_statistics_table(descriptive_statistics_table, True)
+calculate_correlation_matrix_and_plot_heatmap(concat_data_frame, True)
+plot_normal_distributions(data_frames, True)
 calculate_simple_linear_regressions(data_frames, True)
 plot_linear_regression_tables(linear_regressions, True)
