@@ -11,7 +11,6 @@ This is the final and examining project of the course "Mathematical Modeling" at
 """
 import json
 from datetime import datetime
-from pprint import pprint as pp
 
 import pandas as pd
 import seaborn as sns
@@ -98,9 +97,9 @@ def clean_all_data_frames(input_data_paths):
         globals()[data_frame_name] = clean_up_csv_data(globals()[data_frame_name])
         data_frames[data] = pd.DataFrame(globals()[data_frame_name])
 
-    print("Parsed data paths: \n", json.dumps(parsed_data_paths, indent=4), "\n")
+    print(f" {len(parsed_data_paths)} parsed data paths: \n", json.dumps(parsed_data_paths, indent=4), "\n")
     print('Done parsing files, cleaning up CSV data files and creating Pandas data frames. \n')
-    pp(data_frames.values())
+    # pp(data_frames.values())
 
 
 def concatenate_data_frames(input_data_frames):
@@ -131,6 +130,7 @@ def plot_concatinated_data_frame(input_data_frame, show=False):
     :return: None
     """
     input_data_frame.plot()
+
     plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
     plt.subplots_adjust(right=0.75, bottom=0.2)
     plt.savefig('plots/value_over_time/all_data_frames_concatenated.png')
@@ -212,16 +212,28 @@ def plot_descriptive_statistics_table(input_data_frame, show=False):
 
     :return: None
     """
+
+    data = input_data_frame.values
+    columns = input_data_frame.columns
+    rows = input_data_frame.index
+
     table = plt.table(
-        cellText=input_data_frame.values.round(3),
-        colLabels=input_data_frame.columns,
-        rowLabels=input_data_frame.index,
+        cellText=data.round(4),
         cellLoc='left',
+        colLabels=columns,
+        colLoc='left',
+        colColours=['Lightblue'] * len(columns),
+        rowLabels=rows,
+        rowLoc='left',
+        rowColours=['lightyellow'] * len(rows),
         loc='center',
     )
-    plt.axis('off')
+
     table.auto_set_font_size(False)
     table.set_fontsize(4)
+    table.scale(1.1, 1.2)
+
+    plt.axis('off')
     plt.tight_layout()
     plt.savefig(
         './tables/summarized_descriptive_statistics.png',
@@ -230,11 +242,9 @@ def plot_descriptive_statistics_table(input_data_frame, show=False):
         format=None,
         bbox_inches=None,
         orientation='landscape',
-        pad_inches=0.35,
+        pad_inches=0.05,
         dpi=300
     )
-    # make space for the table:
-    plt.subplots_adjust(left=0.05, bottom=0.05)
 
     if show:
         plt.show()
@@ -373,27 +383,74 @@ def calculate_simple_linear_regressions(input_data_frames, show=False):
     print('Done calculating simple linear regressions. \n')
 
 
+def plot_linear_regression_tables(input_data_frames, show=False):
+    for data_frame in input_data_frames:
+        print(f"Plotting linear regression table for {data_frame}...")
+
+        # print(input_data_frames[data_frame])
+
+        # Create a table
+        table_data = pd.DataFrame({
+            # 'x': input_data_frames[data_frame]['x'].flatten(),
+            # 'y': input_data_frames[data_frame]['y'].flatten(),
+            # 'y_predict': input_data_frames[data_frame]['y_predict'].flatten(),
+            # 'fx': input_data_frames[data_frame]['fx'].flatten(),
+            'r_squared': input_data_frames[data_frame]['r_squared'],
+            'slope': input_data_frames[data_frame]['slope'].flatten(),
+            'intercept': input_data_frames[data_frame]['intercept'].flatten(),
+        })
+
+        print(table_data)
+        print(type(table_data))
+
+        # Plot the table
+        sns.set_style('darkgrid')
+        table = plt.table(
+            cellText=table_data.values.round(4),
+            cellLoc='left',
+            colLabels=table_data.columns,
+            colLoc='left',
+            colColours=['lightyellow'] * len(table_data.columns),
+            rowLabels=[data_frame],
+            rowLoc='left',
+            rowColours=['lightblue'] * len(table_data.index),
+            loc='center',
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(6)
+        table.scale(1, 1.25)
+
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(
+            f'./tables/linear_regression_tables/linear_regression_data_{data_frame}.png',
+            bbox_inches='tight', dpi=300)
+
+        if show:
+            plt.show()
+
+
 # Paths for the csv files containing the data
 data_paths = {
-    'Aave': './csv/coin_Aave.csv',
-    'BinanceCoin': './csv/coin_BinanceCoin.csv',
+    # 'Aave': './csv/coin_Aave.csv',
+    # 'BinanceCoin': './csv/coin_BinanceCoin.csv',
     'Bitcoin': './csv/coin_Bitcoin.csv',
     'Cardano': './csv/coin_Cardano.csv',
     'ChainLink': './csv/coin_ChainLink.csv',
     'Cosmos': './csv/coin_Cosmos.csv',
-    'CryptocomCoin': './csv/coin_CryptocomCoin.csv',
+    # 'CryptocomCoin': './csv/coin_CryptocomCoin.csv',
     'Dogecoin': './csv/coin_Dogecoin.csv',
-    'EOS': './csv/coin_EOS.csv',
+    # 'EOS': './csv/coin_EOS.csv',
     'Ethereum': './csv/coin_Ethereum.csv',
-    'Iota': './csv/coin_Iota.csv',
+    # 'Iota': './csv/coin_Iota.csv',
     'Litecoin': './csv/coin_Litecoin.csv',
     'Monero': './csv/coin_Monero.csv',
-    'NEM': './csv/coin_NEM.csv',
+    # 'NEM': './csv/coin_NEM.csv',
     'Polkadot': './csv/coin_Polkadot.csv',
     'Solana': './csv/coin_Solana.csv',
     'Stellar': './csv/coin_Stellar.csv',
     'Tether': './csv/coin_Tether.csv',
-    'Tron': './csv/coin_Tron.csv',
+    # 'Tron': './csv/coin_Tron.csv',
     'Uniswap': './csv/coin_Uniswap.csv',
     'USDCoin': './csv/coin_USDCoin.csv',
     'XRP': './csv/coin_XRP.csv',
@@ -416,9 +473,10 @@ descriptive_statistics_table = concatenate_data_frames(descriptive_statistics)
 
 # TODO: Fix plotting, uncomment before handing in assignment.
 # Run plot data functions
-plot_concatinated_data_frame(concat_data_frame, True)
-lineplot_data_frames(data_frames, True)
-plot_descriptive_statistics_table(descriptive_statistics_table, True)
-calculate_correlation_matrix_and_plot_heatmap(concat_data_frame, True)
-plot_normal_distributions(data_frames, True)
+# plot_concatinated_data_frame(concat_data_frame, True)
+# lineplot_data_frames(data_frames, True)
+# plot_descriptive_statistics_table(descriptive_statistics_table, True)
+# calculate_correlation_matrix_and_plot_heatmap(concat_data_frame, True)
+# plot_normal_distributions(data_frames, True)
 calculate_simple_linear_regressions(data_frames, True)
+plot_linear_regression_tables(linear_regressions, True)
