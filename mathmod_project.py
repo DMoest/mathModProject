@@ -389,15 +389,16 @@ def plot_normal_distributions(input_data_frames, show=False):
 
         sns.distplot(
             x=dataset,
-            color='green',
+            color='purple',
             kde=True,
-            kde_kws={'color': 'darkgreen', 'linewidth': 0.6, 'label': 'Kernel Density Estimation', 'shade': True},
+            kde_kws={'color': 'darkgreen', 'linewidth': 0.6, 'label': 'Kernel Density Estimation', 'shade': True,
+                     'alpha': 0.25},
             label=data,
             fit=norm,
             fit_kws={'color': 'red', 'linewidth': 1, 'label': 'Normal Distribution'}
         )
         sns.set_style('whitegrid')
-        plt.axvline(dataset.mean(), color='blue', linestyle='--', linewidth=1)
+        plt.axvline(dataset.mean(), color='blue', linestyle='--', linewidth=1, label='Mean Value')
         plt.title(f'{data} Normal Distribution', fontsize=20)
         plt.ylabel('Density', fontsize=10)
         plt.xlabel('Value', fontsize=10)
@@ -526,7 +527,7 @@ def plot_linear_regression_tables(input_data_frames, transformed=False, show=Fal
             loc='center',
         )
         plot.auto_set_font_size(False)
-        plot.set_fontsize(6)
+        plot.set_fontsize(8)
         plot.scale(1, 1.25)
 
         plt.axis('off')
@@ -567,15 +568,15 @@ def plot_linear_regression_graphs(input_data_frames, show=False):
             scatter_kws={'s': 5, 'alpha': 0.75},
         )
 
-        sns.regplot(
-            x='Date',
-            y='Value',
-            data=dataset,
-            ci=95,
-            line_kws={'color': 'green', 'lw': 0.75},
-            order=2,
-            scatter=False,
-        )
+        # sns.regplot(
+        #     x='Date',
+        #     y='Value',
+        #     data=dataset,
+        #     ci=95,
+        #     line_kws={'color': 'green', 'lw': 0.75},
+        #     order=2,
+        #     scatter=False,
+        # )
 
         plt.title(f'Linear regression for {data}', fontsize=16)
         plt.savefig(file_path, bbox_inches='tight', dpi=300)
@@ -774,6 +775,58 @@ def plot_residuals(input_data_frames, input_transformed_data_frames, show=False)
         plt.close()
 
 
+def plot_residual_normal_distributions(input_data_frames, show=False):
+    """
+    This function plots the normal distribution of each of the input data frames
+
+    :param input_data_frames: A dictionary of data frames
+    :type input_data_frames: dict
+    :param show: If True, the plot will be shown, defaults to False (optional)
+    :type show: bool, optional
+    """
+    print("Starting to plot normal distributions...")
+
+    for data in input_data_frames:
+        file_path = f'./plots/normal_distribution_transformed/transformed_normal_distribution_{data}.png'
+
+        if show:
+            print(f"Plotting the normal distribution of transformed {data}...")
+        else:
+            print(f"Plotting the normal distribution of transformed {data} and saving it to file: "
+                  f"\n{file_path}")
+
+        dataset = input_data_frames[data]['residuals']
+
+        sns.distplot(
+            x=dataset,
+            color='purple',
+            kde=True,
+            kde_kws={'color': 'darkgreen', 'linewidth': 0.6, 'label': 'Kernel Density Estimation', 'shade': True,
+                     'alpha': 0.25},
+            label=data,
+            fit=norm,
+            fit_kws={'color': 'red', 'linewidth': 1, 'label': 'Normal Distribution'}
+        )
+        sns.set_style('whitegrid')
+        plt.axvline(dataset.mean(), color='blue', linestyle='--', linewidth=1, label='Mean Value')
+        plt.title(f'{data} Normal Distribution', fontsize=20)
+        plt.ylabel('Density', fontsize=10)
+        plt.xlabel('Value', fontsize=10)
+        plt.tight_layout()
+        plt.legend()
+        plt.savefig(
+            file_path,
+            bbox_inches='tight',
+            dpi=300
+        )
+
+        if show:
+            plt.show()
+        plt.close()
+
+    print("Done plotting normal distributions. \n")
+
+
 # Paths for the csv files containing the data
 data_paths = {
     'Bitcoin': './csv/coin_Bitcoin.csv',
@@ -808,13 +861,14 @@ transformed_regressions = calculate_transformed_regressions(data_frames)
 
 # Plot data functions
 print("Starting to plot data...")
-plot_concatenated_data_frame(data_frames)
-plot_data_frames_value_over_time(data_frames)
-plot_descriptive_statistics_table(descriptive_statistics_table)
-plot_correlation_matrix_heatmap(correlation_matrix)
-plot_normal_distributions(data_frames)
-plot_linear_regression_tables(linear_regressions)
-plot_linear_regression_graphs(data_frames)
-plot_linear_regression_tables(transformed_regressions, True)
-plot_residuals(linear_regressions, transformed_regressions, True)
+# plot_concatenated_data_frame(data_frames)
+# plot_data_frames_value_over_time(data_frames)
+# plot_descriptive_statistics_table(descriptive_statistics_table)
+# plot_correlation_matrix_heatmap(correlation_matrix)
+# plot_normal_distributions(data_frames)
+# plot_linear_regression_tables(linear_regressions)
+# plot_linear_regression_graphs(data_frames)
+# plot_linear_regression_tables(transformed_regressions, True)
+# plot_residuals(linear_regressions, transformed_regressions)
+plot_residual_normal_distributions(transformed_regressions, True)
 print("Done plotting data... \n")
